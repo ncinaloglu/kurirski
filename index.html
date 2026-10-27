@@ -235,15 +235,15 @@ nav.tabs a[aria-current="page"] .ic{color:var(--plate)}
     </section>
 
     <section id="v-brojevi" data-view hidden>
-      <h2>Sayılar: kapı, kat, fiyat</h2>
-      <p class="lede">Müşteri telefonda kapı numarasını, kasiyer fiyatı söyler. Duyduğunu rakamla yaz.</p>
-      <div class="label">Ne duyacaksın?</div>
-      <div id="num-kinds" class="chips" role="group" aria-label="Sayı türü"></div>
-      <div class="label">Nasıl?</div>
+      <h2>Sayılar</h2>
       <div class="chips" role="group" aria-label="Mod">
-        <button class="chip" id="nm-listen" type="button" aria-pressed="true">Dinle</button>
-        <button class="chip" id="nm-read" type="button" aria-pressed="false">Oku</button>
+        <button class="chip" id="nm-say" type="button" aria-pressed="true">Sen yaz, o söylesin</button>
+        <button class="chip" id="nm-listen" type="button" aria-pressed="false">Dinle, sen yaz</button>
+        <button class="chip" id="nm-read" type="button" aria-pressed="false">Oku, sen yaz</button>
       </div>
+      <p id="num-lede" class="lede"></p>
+      <div class="label">Ne için?</div>
+      <div id="num-kinds" class="chips" role="group" aria-label="Sayı türü"></div>
       <div id="num-area"></div>
     </section>
   </main>
@@ -559,8 +559,8 @@ const state = {
   deck: store.deck || "all",
   dir: store.dir==="sr"?"sr":"tr",
   dlg: store.dlg || "restoran",
-  numKind: store.numKind || "kapi",
-  numMode: store.numMode==="read"?"read":"listen"
+  numKind: store.numKind || "sayi",
+  numMode: (store.numMode==="read"||store.numMode==="listen")?store.numMode:"say"
 };
 function persist(){ Object.assign(store,{script:state.script,rate:state.rate,group:state.group,deck:state.deck,dir:state.dir,dlg:state.dlg,numKind:state.numKind,numMode:state.numMode}); save(); }
 
@@ -828,31 +828,87 @@ function renderCyr(){
 }
 
 /* ---------- Numbers ---------- */
+const ORD=["","prvi","drugi","treći","četvrti","peti","šesti","sedmi","osmi","deveti","deseti","jedanaesti","dvanaesti","trinaesti","četrnaesti","petnaesti","šesnaesti","sedamnaesti","osamnaesti","devetnaesti","dvadeseti"];
+function endsInOne(n){ return n%10===1 && n%100!==11; }
 const KINDS={
-  kapi:{name:"Kapı no",min:1,max:180,step:1,pre:"Broj"},
-  kat:{name:"Kat",min:1,max:14,step:1,pre:"Sprat"},
-  fiyat:{name:"Fiyat",min:15,max:480,step:10,pre:null,suf:"dinara"},
-  dakika:{name:"Dakika",min:1,max:30,step:1,pre:"Stižem za",suf:"minuta"}
+  sayi:{name:"Sadece sayı",min:1,max:100,step:1,ex:[7,15,42,100],
+    make:function(n){ return numToSr(n); }, tr:function(n){ return String(n); }},
+  fiyat:{name:"Fiyat",min:15,max:480,step:10,ex:[350,850,1200,2490],
+    make:function(n){ return numToSr(n)+(endsInOne(n)?" dinar":" dinara"); }, tr:function(n){ return n+" dinar"; }},
+  kat:{name:"Kat",min:1,max:14,step:1,ex:[0,3,7,12],
+    make:function(n){ return n===0?"prizemlje":(n<ORD.length?ORD[n]+" sprat":"sprat broj "+numToSr(n)); },
+    tr:function(n){ return n===0?"zemin kat":n+". kat"; }},
+  kapi:{name:"Kapı / daire no",min:1,max:180,step:1,ex:[5,22,48,117],
+    make:function(n){ return "broj "+numToSr(n); }, tr:function(n){ return "numara "+n; }},
+  dakika:{name:"Dakika",min:1,max:30,step:1,ex:[1,5,10,20],
+    make:function(n){ return "Stižem za "+numToSr(n)+(endsInOne(n)?" minut.":" minuta."); },
+    tr:function(n){ return n+" dakikaya oradayım."; }}
 };
-let nq=null;
-function newNum(){
-  const k=KINDS[state.numKind];
-  const n=(Math.floor(Math.random()*(k.max-k.min+1))+k.min)*k.step;
-  nq={n:n, done:false, ok:false};
+const LEDE={
+  say:"Rakamı sen yaz, uygulama Sırpçasını gösterir ve sesli söyler. Kasada ya da kapıda söylemen gereken sayıyı burada hazırla.",
+  listen:"1. Dinle düğmesine bas. 2. Duyduğun sayıyı rakamla yaz. 3. Kontrol et. Müşteri telefonda kapı numarası ya da fiyat söylediğinde anlayabilmek için.",
+  read:"Sırpça yazılmış sayıyı oku, rakamla yaz. Mesajlarda ve fişlerde yazıyla geçen sayıları anlamak için."
+};
+let nq=null, convVal=null;
+function kind(){ return KINDS[state.numKind]||KINDS.sayi; }
+function newNum(){ const k=kind(); nq={n:(Math.floor(Math.random()*(k.max-k.min+1))+k.min)*k.step, done:false, ok:false}; }
+function numPhrase(){ return kind().make(nq.n); }
+function resultBox(n){
+  const k=kind(), phrase=k.make(n), box=el("div","stack");
+  const pl=el("div","plate"); const pi=el("div","plate-in");
+  pi.appendChild(el("div","p-main",main(phrase))); pi.appendChild(el("div","p-sub",other(phrase)));
+  pl.appendChild(pi); box.appendChild(pl);
+  const info=el("div","panel");
+  info.appendChild(el("div","pr","okunuş: "+toTr(phrase)));
+  info.appendChild(el("div","tr",k.tr(n)));
+  box.appendChild(info);
+  const b=el("button","big-say"); b.type="button"; b.style.minHeight="64px"; b.innerHTML=SPK+"<span>Sesli söyle</span>";
+  b.addEventListener("click",function(){ speak(phrase); });
+  box.appendChild(b);
+  return box;
 }
-function numPhrase(){ const k=KINDS[state.numKind]; const w=numToSr(nq.n); return [k.pre,w,k.suf].filter(Boolean).join(" "); }
 function renderNum(){
+  if(["say","listen","read"].indexOf(state.numMode)<0) state.numMode="say";
+  ["say","listen","read"].forEach(function(m){ $("#nm-"+m).setAttribute("aria-pressed", state.numMode===m); });
+  $("#num-lede").textContent=LEDE[state.numMode];
   const kc=$("#num-kinds"); kc.innerHTML="";
   Object.keys(KINDS).forEach(function(id){
     const b=el("button","chip",KINDS[id].name); b.type="button";
     b.setAttribute("aria-pressed", id===state.numKind);
-    b.addEventListener("click",function(){ state.numKind=id; persist(); newNum(); renderNum(); });
+    b.addEventListener("click",function(){ state.numKind=id; persist(); nq=null; renderNum(); });
     kc.appendChild(b);
   });
-  $("#nm-listen").setAttribute("aria-pressed", state.numMode==="listen");
-  $("#nm-read").setAttribute("aria-pressed", state.numMode==="read");
-  if(!nq) newNum();
+  if(!KINDS[state.numKind]) state.numKind="sayi";
   const area=$("#num-area"); area.innerHTML="";
+
+  if(state.numMode==="say"){
+    const inp=el("input","numin"); inp.id="num-conv"; inp.type="text"; inp.setAttribute("inputmode","numeric");
+    inp.setAttribute("aria-label","Rakam yaz"); inp.placeholder="örn. 850"; inp.autocomplete="off";
+    if(convVal!=null) inp.value=String(convVal);
+    area.appendChild(inp);
+    const ex=el("div","chips"); ex.style.marginTop="10px";
+    kind().ex.forEach(function(n){
+      const c=el("button","chip",state.numKind==="kat"&&n===0?"zemin":String(n)); c.type="button";
+      c.addEventListener("click",function(){ convVal=n; renderNum(); speak(kind().make(n)); });
+      ex.appendChild(c);
+    });
+    area.appendChild(ex);
+    const out=el("div"); out.style.marginTop="6px"; area.appendChild(out);
+    const draw=function(){
+      out.innerHTML="";
+      const raw=inp.value.replace(/\D/g,"");
+      if(!raw){ out.appendChild(el("div","hint","Yukarıya bir rakam yaz ya da örneklerden birine dokun.")); convVal=null; return; }
+      const n=parseInt(raw,10);
+      if(n>999999){ out.appendChild(el("div","hint","En fazla 999.999 yazabilirsin.")); return; }
+      convVal=n; out.appendChild(resultBox(n));
+    };
+    inp.addEventListener("input",draw);
+    inp.addEventListener("keydown",function(e){ if(e.key==="Enter"&&convVal!=null) speak(kind().make(convVal)); });
+    draw();
+    return;
+  }
+
+  if(!nq) newNum();
   const phrase=numPhrase();
   if(state.numMode==="listen"){
     const b=el("button","big-say"); b.type="button"; b.innerHTML=SPK+"<span>Dinle</span>";
@@ -861,18 +917,18 @@ function renderNum(){
   } else {
     const pl=el("div","plate"); const pi=el("div","plate-in"); pi.appendChild(el("div","p-main",main(phrase))); pl.appendChild(pi); area.appendChild(pl);
   }
-  const inp=el("input","numin"); inp.id="num-in"; inp.type="text"; inp.setAttribute("inputmode","numeric"); inp.setAttribute("aria-label","Rakamla yaz"); inp.placeholder="rakamla yaz"; inp.autocomplete="off";
+  const inp=el("input","numin"); inp.id="num-in"; inp.type="text"; inp.setAttribute("inputmode","numeric"); inp.setAttribute("aria-label","Rakamla yaz"); inp.placeholder="duyduğunu rakamla yaz"; inp.autocomplete="off";
   if(nq.done){ inp.value=nq.given; inp.disabled=true; }
   area.appendChild(inp);
   if(!nq.done){
     const c=el("button","btn primary","Kontrol et"); c.type="button"; c.style.width="100%"; c.style.marginTop="10px";
-    const go=function(){ const v=parseInt(inp.value.replace(/\D/g,""),10); if(isNaN(v)) { inp.focus(); return; } nq.given=String(v); nq.done=true; nq.ok=(v===nq.n); renderNum(); };
+    const go=function(){ const v=parseInt(inp.value.replace(/\D/g,""),10); if(isNaN(v)){ inp.focus(); return; } nq.given=String(v); nq.done=true; nq.ok=(v===nq.n); renderNum(); };
     c.addEventListener("click",go);
     inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
     area.appendChild(c);
   } else {
     const f=el("div","feedback "+(nq.ok?"ok":"no"));
-    f.appendChild(el("div",null, nq.ok?"Doğru: "+nq.n:"Doğrusu: "+nq.n));
+    f.appendChild(el("div",null, (nq.ok?"Doğru: ":"Doğrusu: ")+kind().tr(nq.n)));
     f.appendChild(el("div","sr",main(phrase)));
     f.appendChild(el("div","pr","okunuş: "+toTr(phrase)));
     area.appendChild(f);
@@ -882,8 +938,9 @@ function renderNum(){
     row.appendChild(l); row.appendChild(n); area.appendChild(row);
   }
 }
-$("#nm-listen").addEventListener("click",function(){ state.numMode="listen"; persist(); renderNum(); });
-$("#nm-read").addEventListener("click",function(){ state.numMode="read"; persist(); renderNum(); });
+$("#nm-say").addEventListener("click",function(){ state.numMode="say"; persist(); renderNum(); });
+$("#nm-listen").addEventListener("click",function(){ state.numMode="listen"; nq=null; persist(); renderNum(); });
+$("#nm-read").addEventListener("click",function(){ state.numMode="read"; nq=null; persist(); renderNum(); });
 
 /* ---------- Routing ---------- */
 const VIEWS=["fraze","dijalog","kartice","cirilica","brojevi"];
