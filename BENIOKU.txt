@@ -1,0 +1,13 @@
+KURIRSKI SRPSKI - iPhone ve Android icin kurulum
+
+1) github.com'da ucretsiz hesap ac.
+2) Yeni bir depo (repository) olustur, adi: kurirski  (Public sec)
+3) "Add file" > "Upload files" ile bu klasordeki TUM dosyalari yukle, "Commit changes".
+4) Depoda Settings > Pages > Branch: main, klasor: / (root) > Save.
+5) 1-2 dakika sonra adres: https://KULLANICI-ADIN.github.io/kurirski/
+
+iPhone: Safari ile adresi ac > Paylas dugmesi > "Ana Ekrana Ekle".
+Android: Chrome ile adresi ac > menu > "Ana ekrana ekle" / "Uygulamayi yukle".
+
+Bir kez internetle actiktan sonra internetsiz de calisir.
+Ses: iPhone'da Ayarlar > Erisilebilirlik > Seslendirilen Icerik > Sesler > Hirvatca (Lana) indirilebilir.

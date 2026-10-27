@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kurirski">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Kurirski srpski</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#1C4C9A">
+<style>
+/* Layout: one-hand phone app. Sticky header (script + speed), single 640px column, fixed bottom tab bar.
+   Serbian always sits on an enamel-blue "street plate" like Belgrade street signs: Cyrillic over Latin. */
+:root{
+  --paper:#EDF1F7; --card:#FFFFFF; --ink:#13203A; --muted:#56637A; --line:#D2D9E5;
+  --plate:#1C4C9A; --plate-ink:#FFFFFF; --plate-edge:#FFFFFF;
+  --signal:#C98204; --signal-soft:#FBEFD6;
+  --ok:#1F6E45; --ok-soft:#DCF0E3; --bad:#A33131; --bad-soft:#F6E0E0;
+  --f-display:"sans-serif-condensed","Roboto Condensed","Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --f-mono:ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0D1420; --card:#162032; --ink:#E7ECF4; --muted:#97A3B9; --line:#27344B;
+  --plate:#2F63BE; --plate-ink:#FFFFFF; --plate-edge:#C9D8F5;
+  --signal:#EDB23C; --signal-soft:#3A2F17;
+  --ok:#5CC48B; --ok-soft:#15301F; --bad:#EE8080; --bad-soft:#3A1C1C;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0D1420; --card:#162032; --ink:#E7ECF4; --muted:#97A3B9; --line:#27344B;
+  --plate:#2F63BE; --plate-ink:#FFFFFF; --plate-edge:#C9D8F5;
+  --signal:#EDB23C; --signal-soft:#3A2F17;
+  --ok:#5CC48B; --ok-soft:#15301F; --bad:#EE8080; --bad-soft:#3A1C1C;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(84px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto}
+
+/* Header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--paper);
+  display:flex;align-items:center;gap:10px;padding-block:12px 10px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.mark{flex:none;width:34px;height:34px;border-radius:7px;background:var(--plate);color:var(--plate-ink);
+  display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:19px;box-shadow:inset 0 0 0 2px var(--plate),inset 0 0 0 3.5px var(--plate-edge)}
+.brand b{font-family:var(--f-display);font-size:19px;letter-spacing:.01em;white-space:nowrap}
+.brand small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:7px 11px;font-size:13px;font-weight:600;color:var(--muted);min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--plate);color:var(--plate-ink)}
+.icon-btn{border:1px solid var(--line);background:var(--card);border-radius:999px;min-height:36px;padding:0 11px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+.notice{background:var(--signal-soft);border:1px solid var(--signal);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:14px}
+.notice b{display:block;margin-bottom:2px}
+.notice button{margin-top:8px;border:0;background:none;color:var(--signal);font-weight:700;padding:0}
+
+h2{font-family:var(--f-display);font-size:24px;line-height:1.15;margin:4px 0 4px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 14px;font-size:14.5px;max-width:60ch}
+
+/* Chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;font-size:14px;font-weight:600;min-height:40px;white-space:nowrap}
+.chip[aria-pressed="true"]{border-color:var(--plate);background:var(--plate);color:var(--plate-ink)}
+.chip .n{font-family:var(--f-mono);font-size:11px;opacity:.7;margin-left:4px}
+
+.search{width:100%;border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:12px 14px;min-height:46px;margin-bottom:10px}
+
+/* Phrase rows */
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.row{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.say{width:44px;height:44px;border-radius:50%;border:0;background:var(--plate);color:var(--plate-ink);display:grid;place-items:center}
+.say svg{width:20px;height:20px}
+.say:active{transform:scale(.94)}
+.txt{min-width:0}
+.sr{font-family:var(--f-display);font-size:19px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.sub{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.pr{font-family:var(--f-mono);font-size:12.5px;color:var(--signal);margin-top:2px;overflow-wrap:anywhere}
+.tr{margin-top:4px;font-size:15px}
+.note{margin-top:4px;font-size:13px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:24px 8px}
+
+/* Street plate */
+.plate{background:var(--plate);color:var(--plate-ink);border-radius:10px;padding:5px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.plate-in{border:2px solid var(--plate-edge);border-radius:7px;padding:16px 14px;text-align:center;min-height:120px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.p-main{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,7vw,32px);line-height:1.15;text-wrap:balance;overflow-wrap:anywhere}
+.p-sub{font-size:14px;opacity:.85;overflow-wrap:anywhere}
+.p-sign .p-main{letter-spacing:.04em;font-size:clamp(28px,9vw,40px)}
+
+/* Panels & buttons */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:12px 16px;font-weight:700;min-height:50px}
+.btn.primary{background:var(--plate);border-color:var(--plate);color:var(--plate-ink)}
+.btn.good{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn.again{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stack{display:grid;gap:12px}
+.reveal{margin-top:12px}
+.reveal .tr{font-size:18px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.prompt-tr{font-size:22px;font-weight:700;text-align:center;padding:26px 10px;text-wrap:balance}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+
+/* Dialog */
+.chat{display:flex;flex-direction:column;gap:10px;margin:6px 0 14px}
+.bub{max-width:86%;border-radius:14px;padding:10px 12px;border:1px solid var(--line);background:var(--card)}
+.bub.them{align-self:flex-start;border-bottom-left-radius:4px}
+.bub.me{align-self:flex-end;background:var(--plate);border-color:var(--plate);color:var(--plate-ink);border-bottom-right-radius:4px}
+.bub .who{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+.bub.me .who,.bub.me .tr2{color:var(--plate-ink);opacity:.85}
+.bub .line{display:flex;gap:8px;align-items:flex-start}
+.bub .sr{font-size:17px}
+.bub .tr2{font-size:13.5px;color:var(--muted);margin-top:3px}
+.mini{flex:none;width:32px;height:32px;border-radius:50%;border:0;background:var(--paper);color:var(--plate);display:grid;place-items:center}
+.mini svg{width:16px;height:16px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:12px 14px;min-height:52px}
+.opt .sr{font-size:17px}
+.opt .tr2{display:none;font-size:13px;margin-top:3px}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .tr2{display:block;color:var(--bad)}
+.setting{font-size:14px;color:var(--muted);border-left:3px solid var(--signal);padding-left:10px;margin:0 0 6px}
+.done{background:var(--ok-soft);border:1px solid var(--ok);color:var(--ok);border-radius:var(--r);padding:12px 14px;font-weight:600}
+
+/* Quiz */
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.qopt{border:1px solid var(--line);background:var(--card);border-radius:var(--r);padding:12px 8px;min-height:56px;font-family:var(--f-display);font-size:17px;font-weight:700;overflow-wrap:anywhere}
+.qopt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.qopt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.score{font-family:var(--f-mono);font-size:13px;color:var(--muted);text-align:right;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.feedback{margin-top:12px;border-radius:var(--r);padding:12px 14px}
+.feedback.ok{background:var(--ok-soft);color:var(--ok)}
+.feedback.no{background:var(--bad-soft);color:var(--bad)}
+.feedback .sr{color:var(--ink);font-size:17px}
+.feedback .pr{color:var(--signal)}
+.numin{width:100%;text-align:center;font-family:var(--f-mono);font-size:30px;border:2px solid var(--line);border-radius:var(--r);background:var(--card);padding:10px;margin-top:12px;font-variant-numeric:tabular-nums}
+.numin:focus{border-color:var(--plate);outline:none}
+.big-say{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:120px;border-radius:10px;border:0;background:var(--plate);color:var(--plate-ink);font-family:var(--f-display);font-size:22px;font-weight:700}
+.big-say svg{width:28px;height:28px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 6px;font-weight:700}
+
+/* Bottom nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--card);border-top:1px solid var(--line);
+  padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 9px;text-decoration:none;color:var(--muted);font-size:11.5px;font-weight:600;min-height:58px}
+nav.tabs a .ic{width:24px;height:24px;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:17px}
+nav.tabs a .ic svg{width:22px;height:22px}
+nav.tabs a[aria-current="page"]{color:var(--plate)}
+nav.tabs a[aria-current="page"] .ic{color:var(--plate)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs a[aria-current="page"]{color:var(--plate-edge)}}
+:root[data-theme="dark"] nav.tabs a[aria-current="page"]{color:var(--plate-edge)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.shake{animation:shake .25s 2}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">К</div>
+      <div><b>Kurirski srpski</b><small>Kurye için sokak Sırpçası</small></div>
+    </div>
+    <div class="seg" role="group" aria-label="Alfabe">
+      <button id="sc-lat" type="button" aria-pressed="true">LAT</button>
+      <button id="sc-cyr" type="button" aria-pressed="false">ĆIR</button>
+    </div>
+    <button id="speed" class="icon-btn" type="button" aria-label="Konuşma hızı">Yavaş</button>
+  </header>
+
+  <div id="voice-note" class="notice" hidden>
+    <b>Telefonunda Sırpça ses bulunamadı.</b>
+    Android'de Ayarlar → Sistem → Diller → Metin okuma (Google) → Ses verilerini yükle → <i>Srpski</i> veya <i>Hrvatski</i> seç. Yazılar ve okunuşlar sessiz de çalışır.
+    <br><button id="voice-x" type="button">Tamam, kapat</button>
+  </div>
+
+  <main>
+    <section id="v-fraze" data-view>
+      <input id="q" class="search" type="search" placeholder="Ara: adres, kat, bozuk para, polis…" aria-label="Cümle ara" autocomplete="off">
+      <div id="group-chips" class="chips" role="group" aria-label="Senaryolar"></div>
+      <h2 id="g-title"></h2>
+      <p id="g-desc" class="lede"></p>
+      <ul id="list" class="list"></ul>
+    </section>
+
+    <section id="v-dijalog" data-view hidden>
+      <h2>Canlı diyalog</h2>
+      <p class="lede">Karşındaki konuşur, sen doğru cevabı seçersin. Yanlış seçersen ne dediğini görürsün.</p>
+      <div id="dlg-chips" class="chips" role="group" aria-label="Diyaloglar"></div>
+      <p id="dlg-setting" class="setting"></p>
+      <div id="chat" class="chat" aria-live="polite"></div>
+      <div id="dlg-opts" class="opts"></div>
+    </section>
+
+    <section id="v-kartice" data-view hidden>
+      <h2>Tekrar kartları</h2>
+      <p class="lede">Bildiğin kartlar daha seyrek, bilmediklerin hemen tekrar gelir. İlerlemen bu telefonda saklanır.</p>
+      <div class="stats">
+        <div class="stat"><b id="st-due">0</b><span>bugün tekrar</span></div>
+        <div class="stat"><b id="st-new">0</b><span>yeni kart</span></div>
+        <div class="stat"><b id="st-ok">0</b><span>oturmuş</span></div>
+      </div>
+      <div class="chips" role="group" aria-label="Yön">
+        <button class="chip" id="dir-tr" type="button" aria-pressed="true">Türkçe → Sırpça</button>
+        <button class="chip" id="dir-sr" type="button" aria-pressed="false">Sırpça → Türkçe</button>
+      </div>
+      <div id="card-chips" class="chips" role="group" aria-label="Kart destesi"></div>
+      <div id="card-area"></div>
+    </section>
+
+    <section id="v-cirilica" data-view hidden>
+      <h2>Kiril tabela okuma</h2>
+      <p class="lede">Belgrad'da tabelaların ve sokak isimlerinin çoğu Kiril. Tabelayı oku, doğru Latin okunuşu seç.</p>
+      <div id="cyr-score" class="score"></div>
+      <div id="cyr-area"></div>
+    </section>
+
+    <section id="v-brojevi" data-view hidden>
+      <h2>Sayılar: kapı, kat, fiyat</h2>
+      <p class="lede">Müşteri telefonda kapı numarasını, kasiyer fiyatı söyler. Duyduğunu rakamla yaz.</p>
+      <div class="label">Ne duyacaksın?</div>
+      <div id="num-kinds" class="chips" role="group" aria-label="Sayı türü"></div>
+      <div class="label">Nasıl?</div>
+      <div class="chips" role="group" aria-label="Mod">
+        <button class="chip" id="nm-listen" type="button" aria-pressed="true">Dinle</button>
+        <button class="chip" id="nm-read" type="button" aria-pressed="false">Oku</button>
+      </div>
+      <div id="num-area"></div>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="Bölümler">
+  <div class="in">
+    <a href="#fraze" data-tab="fraze"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Cümleler</a>
+    <a href="#dijalog" data-tab="dijalog"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h12v8H9l-4 3v-3H4z"/><path d="M16 9h4v8h-1v3l-4-3h-4v-2"/></svg></span>Diyalog</a>
+    <a href="#kartice" data-tab="kartice"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="14" height="13" rx="2"/><path d="M7 4h12a2 2 0 0 1 2 2v11"/></svg></span>Kartlar</a>
+    <a href="#cirilica" data-tab="cirilica"><span class="ic">Ћ</span>Kiril</a>
+    <a href="#brojevi" data-tab="brojevi"><span class="ic">12</span>Sayılar</a>
+  </div>
+</nav>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Content ---------- */
+const GROUPS = [
+ {id:"teslim", name:"Teslim alma", title:"Restoranda siparişi almak", desc:"Restoran, market ya da fırında paketi teslim alırken.", items:[
+  ["Dobar dan!","İyi günler!","Gün içinde selam."],
+  ["Dobro veče!","İyi akşamlar!"],
+  ["Ja sam dostavljač.","Ben kuryeyim."],
+  ["Došao sam po porudžbinu.","Siparişi almaya geldim.","porudžbina = sipariş"],
+  ["Broj porudžbine je sto dvadeset.","Sipariş numarası 120."],
+  ["Na koje ime?","Hangi isim adına?","Restoran sana sorar."],
+  ["Da li je spremno?","Hazır mı?"],
+  ["Koliko još treba?","Daha ne kadar sürer?"],
+  ["Još pet minuta.","Beş dakika daha.","Duyacağın cevap."],
+  ["Čekam napolju.","Dışarıda bekliyorum."],
+  ["Da li je sve tu?","Her şey tamam mı?","Kelimesi kelimesine: hepsi burada mı?"],
+  ["Fali piće.","İçecek eksik.","fali = eksik (günlük dil)"],
+  ["Može još jedna kesa?","Bir poşet daha alabilir miyim?"],
+  ["U redu.","Tamam."],
+  ["Hvala, prijatno!","Teşekkürler, iyi günler!","prijatno: vedalaşırken iyi günler, yemekte afiyet olsun."]
+ ]},
+ {id:"adres", name:"Adres ve yön", title:"Adresi ve girişi bulmak", desc:"Belgrad'da asıl zorluk sokak değil, doğru giriş ve kat.", items:[
+  ["Izvinite, gde je ova ulica?","Affedersiniz, bu sokak nerede?"],
+  ["Gde je broj dvadeset dva?","22 numara nerede?"],
+  ["Levo","Sol"],
+  ["Desno","Sağ"],
+  ["Pravo","Düz"],
+  ["Skrenite levo.","Sola dönün."],
+  ["Skrenite desno.","Sağa dönün."],
+  ["Idite pravo.","Düz gidin."],
+  ["Na uglu.","Köşede."],
+  ["Preko puta.","Karşıda, karşısında."],
+  ["Pored prodavnice.","Marketin yanında."],
+  ["Iza zgrade.","Binanın arkasında."],
+  ["Ulaz","Giriş (bina kapısı)"],
+  ["Sprat","Kat"],
+  ["Stan","Daire"],
+  ["Prizemlje","Zemin kat"],
+  ["Dvorište","Avlu, iç bahçe","Eski binalarda giriş çoğu zaman avludandır."],
+  ["Ulaz je iz dvorišta.","Giriş avludan.","Duyacağın cevap."],
+  ["Koji sprat?","Hangi kat?"],
+  ["Ulaz B, treći sprat, stan dvanaest.","B girişi, 3. kat, 12 numaralı daire."],
+  ["Lamela","Blok (aynı sitedeki ayrı bina)","Yeni sitelerde lamela A, lamela B diye yazar."],
+  ["Blok","Blok (Novi Beograd'da bölge numarası)","Novi Beograd adresleri Blok 45 gibi bölge numarası içerir."]
+ ]},
+ {id:"kapi", name:"Kapıda", title:"Müşteriyle kapıda", desc:"Diafonda, kapıda, apartman önünde.", items:[
+  ["Dobro veče, dostava!","İyi akşamlar, siparişiniz geldi!","dostava = teslimat"],
+  ["Izvolite, vaša porudžbina.","Buyurun, siparişiniz."],
+  ["Ja sam ispred zgrade.","Binanın önündeyim."],
+  ["Možete li da siđete?","Aşağı inebilir misiniz?"],
+  ["Interfon ne radi.","Diafon çalışmıyor."],
+  ["Lift ne radi.","Asansör çalışmıyor."],
+  ["Penjem se.","Yukarı çıkıyorum."],
+  ["Zvonio sam, niko ne otvara.","Zili çaldım, kimse açmıyor."],
+  ["Ostaviću ispred vrata.","Kapının önüne bırakacağım."],
+  ["Prijatno!","Afiyet olsun! / İyi günler!"],
+  ["Uživajte!","Keyfini çıkarın!"],
+  ["Laku noć!","İyi geceler!"]
+ ]},
+ {id:"telefon", name:"Telefonda", title:"Müşteriyi aramak", desc:"Telefonda karşını görmezsin, bu yüzden en zor kısım burası.", items:[
+  ["Halo, ja sam dostavljač.","Alo, ben kuryeyim."],
+  ["Ne mogu da nađem adresu.","Adresi bulamıyorum."],
+  ["Ne mogu da nađem ulaz.","Girişi bulamıyorum."],
+  ["Možete li da mi pošaljete lokaciju?","Bana konum gönderebilir misiniz?"],
+  ["Stižem za pet minuta.","Beş dakikaya oradayım."],
+  ["Kasnim malo, izvinite.","Biraz gecikiyorum, kusura bakmayın."],
+  ["Ne razumem dobro srpski.","Sırpçayı iyi anlamıyorum."],
+  ["Možete li sporije, molim vas?","Daha yavaş konuşabilir misiniz, lütfen?"],
+  ["Možete li da ponovite?","Tekrar eder misiniz?"],
+  ["Možete li da mi napišete poruku?","Bana mesaj yazabilir misiniz?"],
+  ["Govorite li engleski?","İngilizce konuşuyor musunuz?"],
+  ["Razumem.","Anlıyorum."]
+ ]},
+ {id:"odeme", name:"Ödeme", title:"Nakit, kart, para üstü", desc:"Kapıda nakit ödemede sayılar hızlı söylenir.", items:[
+  ["Koliko je?","Ne kadar?"],
+  ["To je osamsto pedeset dinara.","850 dinar ediyor."],
+  ["Plaćanje gotovinom.","Nakit ödeme."],
+  ["Plaćanje karticom.","Kartla ödeme."],
+  ["Već je plaćeno.","Ödenmiş zaten.","Online ödenmiş siparişte."],
+  ["Imate li sitno?","Bozuk paranız var mı?"],
+  ["Nemam sitno.","Bozuğum yok."],
+  ["Izvolite kusur.","Buyurun, para üstünüz."],
+  ["Zadržite kusur.","Üstü kalsın.","Müşteri söyler: bahşiş demek."],
+  ["Hvala na napojnici!","Bahşiş için teşekkürler!"],
+  ["Račun","Fiş, hesap"]
+ ]},
+ {id:"yol", name:"Yol ve polis", title:"Trafikte ve polis kontrolünde", desc:"Sakin ol, kısa konuş, belgelerini hazır tut.", items:[
+  ["Saobraćajna policija","Trafik polisi"],
+  ["Vozačku i saobraćajnu, molim.","Ehliyet ve ruhsat, lütfen.","vozačka dozvola = ehliyet, saobraćajna dozvola = ruhsat"],
+  ["Izvolite.","Buyurun."],
+  ["Ja sam iz Turske.","Türkiye'denim."],
+  ["Ja sam stranac.","Ben yabancıyım."],
+  ["Imam boravak.","Oturma iznim var."],
+  ["Ovo je moj pasoš.","Bu benim pasaportum."],
+  ["Izvinite, dostava je, odmah idem.","Kusura bakmayın, teslimat var, hemen gidiyorum."],
+  ["Gde mogu da parkiram?","Nereye park edebilirim?"],
+  ["Zabranjeno parkiranje","Park yasaktır"],
+  ["Jednosmerna ulica","Tek yön sokak"],
+  ["Pešački prelaz","Yaya geçidi"],
+  ["Benzinska pumpa","Benzin istasyonu"],
+  ["Pukla mi je guma.","Lastiğim patladı."]
+ ]},
+ {id:"sorun", name:"Sorunlar", title:"İşler ters gidince", desc:"Destek hattına ya da restorana durumu anlatmak için.", items:[
+  ["Porudžbina je oštećena.","Sipariş hasar görmüş."],
+  ["Nedostaje jedan proizvod.","Bir ürün eksik."],
+  ["Restoran je zatvoren.","Restoran kapalı."],
+  ["Kupac se ne javlja.","Müşteri telefonu açmıyor."],
+  ["Pogrešna adresa.","Yanlış adres."],
+  ["Čekam već dvadeset minuta.","Yirmi dakikadır bekliyorum."],
+  ["Pozvaću podršku.","Destek hattını arayacağım."],
+  ["Pada kiša.","Yağmur yağıyor."],
+  ["Treba mi pomoć.","Yardıma ihtiyacım var."]
+ ]},
+ {id:"gunluk", name:"Günlük hayat", title:"Market, eczane, ev", desc:"İş dışındaki temel ihtiyaçlar.", items:[
+  ["Koliko košta?","Kaç para?"],
+  ["Gde je kasa?","Kasa nerede?"],
+  ["Treba mi kesa.","Poşet lazım."],
+  ["Hleb","Ekmek"],
+  ["Mleko","Süt"],
+  ["Voda","Su"],
+  ["Jaja","Yumurta"],
+  ["Piletina","Tavuk eti"],
+  ["Kafa","Kahve"],
+  ["Apoteka","Eczane"],
+  ["Imate li nešto protiv bolova?","Ağrı için bir şeyiniz var mı?"],
+  ["Pekara","Fırın"],
+  ["Pijaca","Açık pazar"],
+  ["Tražim stan.","Ev arıyorum."],
+  ["Kada se plaća kirija?","Kira ne zaman ödenir?"]
+ ]},
+ {id:"resmi", name:"Resmi işler", title:"Polis, belediye, gişe", desc:"Oturma izni ve adres kaydı için.", items:[
+  ["Prijava boravka","İkamet (adres) kaydı","Halk arasında beli karton denir."],
+  ["Treba mi beli karton.","Adres kaydı belgesine ihtiyacım var."],
+  ["Želim da zakažem termin.","Randevu almak istiyorum."],
+  ["Koje dokumente treba da donesem?","Hangi belgeleri getirmeliyim?"],
+  ["Gde je šalter za strance?","Yabancılar gişesi nerede?"],
+  ["Šalter","Gişe"],
+  ["Jedinstvena dozvola","Tek izin (oturma + çalışma)"],
+  ["Kada će biti gotovo?","Ne zaman hazır olur?"],
+  ["Hvala na pomoći.","Yardımınız için teşekkürler."]
+ ]}
+];
+
+const DIALOGS = [
+ {id:"restoran", name:"Restoranda", who:"Kasiyer", setting:"Bir burger dükkânına siparişi almaya girdin.", steps:[
+  {say:"Dobar dan! Izvolite?", tr:"İyi günler! Buyurun?", opts:[
+    ["Dobar dan, došao sam po porudžbinu.","İyi günler, siparişi almaya geldim.",1],
+    ["Laku noć!","İyi geceler!",0],
+    ["Pukla mi je guma.","Lastiğim patladı.",0]]},
+  {say:"Na koje ime?", tr:"Hangi isim adına?", opts:[
+    ["Na ime Marko, broj sto dvadeset.","Marko adına, numara 120.",1],
+    ["Ja sam iz Turske.","Türkiye'denim.",0],
+    ["Zabranjeno parkiranje.","Park yasak.",0]]},
+  {say:"Još pet minuta, molim vas.", tr:"Beş dakika daha, lütfen.", opts:[
+    ["U redu, čekam napolju.","Tamam, dışarıda bekliyorum.",1],
+    ["Izvolite kusur.","Buyurun, para üstünüz.",0],
+    ["Treba mi beli karton.","Adres kaydı belgesine ihtiyacım var.",0]]},
+  {say:"Izvolite, sve je tu.", tr:"Buyurun, her şey burada.", opts:[
+    ["Hvala, prijatno!","Teşekkürler, iyi günler!",1],
+    ["Ne mogu da nađem ulaz.","Girişi bulamıyorum.",0],
+    ["Koliko još treba?","Daha ne kadar sürer?",0]]}
+ ]},
+ {id:"interfon", name:"Diafonda", who:"Müşteri", setting:"Apartmanın önündesin, diafona bastın.", steps:[
+  {say:"Halo?", tr:"Alo?", opts:[
+    ["Dobro veče, dostava!","İyi akşamlar, siparişiniz geldi!",1],
+    ["Gde je kasa?","Kasa nerede?",0],
+    ["Pada kiša.","Yağmur yağıyor.",0]]},
+  {say:"Treći sprat, stan levo.", tr:"Üçüncü kat, soldaki daire.", opts:[
+    ["Može. Da li radi lift?","Olur. Asansör çalışıyor mu?",1],
+    ["Plaćanje karticom.","Kartla ödeme.",0],
+    ["Ja sam stranac.","Ben yabancıyım.",0]]},
+  {say:"Lift ne radi, izvinite.", tr:"Asansör çalışmıyor, kusura bakmayın.", opts:[
+    ["Nema problema, penjem se.","Sorun değil, yukarı çıkıyorum.",1],
+    ["Hvala na napojnici!","Bahşiş için teşekkürler!",0],
+    ["Na koje ime?","Hangi isim adına?",0]]},
+  {say:"Hvala puno!", tr:"Çok teşekkürler!", opts:[
+    ["Prijatno!","Afiyet olsun!",1],
+    ["Koji sprat?","Hangi kat?",0],
+    ["Čekam napolju.","Dışarıda bekliyorum.",0]]}
+ ]},
+ {id:"telefon", name:"Telefonda", who:"Müşteri", setting:"Binayı buldun ama girişi göremiyorsun, müşteriyi arıyorsun.", steps:[
+  {say:"Halo?", tr:"Alo?", opts:[
+    ["Halo, ja sam dostavljač. Ne mogu da nađem ulaz.","Alo, ben kuryeyim. Girişi bulamıyorum.",1],
+    ["Izvolite, vaša porudžbina.","Buyurun, siparişiniz.",0],
+    ["Zadržite kusur.","Üstü kalsın.",0]]},
+  {say:"Ulaz je iz dvorišta, pored prodavnice.", tr:"Giriş avludan, marketin yanında.", opts:[
+    ["Možete li sporije, molim vas?","Daha yavaş konuşabilir misiniz, lütfen?",1],
+    ["Plaćanje gotovinom.","Nakit ödeme.",0],
+    ["Laku noć!","İyi geceler!",0]]},
+  {say:"Ulaz… je… iz dvorišta. Pored prodavnice.", tr:"Giriş… avludan. Marketin yanında.", opts:[
+    ["Razumem, hvala! Stižem za dva minuta.","Anladım, teşekkürler! İki dakikaya oradayım.",1],
+    ["Gde mogu da parkiram?","Nereye park edebilirim?",0],
+    ["Fali piće.","İçecek eksik.",0]]}
+ ]},
+ {id:"policija", name:"Polis kontrolü", who:"Polis", setting:"Akşam, teslimata giderken trafik polisi seni durdurdu.", steps:[
+  {say:"Dobro veče. Vozačku i saobraćajnu, molim.", tr:"İyi akşamlar. Ehliyet ve ruhsat, lütfen.", opts:[
+    ["Izvolite.","Buyurun.",1],
+    ["Uživajte!","Keyfini çıkarın!",0],
+    ["Imate li sitno?","Bozuk paranız var mı?",0]]},
+  {say:"Da li ste stranac?", tr:"Yabancı mısınız?", opts:[
+    ["Da, ja sam iz Turske. Imam boravak.","Evet, Türkiye'denim. Oturma iznim var.",1],
+    ["Ne, hvala.","Hayır, teşekkürler.",0],
+    ["Lift ne radi.","Asansör çalışmıyor.",0]]},
+  {say:"Zašto ste parkirali ovde?", tr:"Neden buraya park ettiniz?", opts:[
+    ["Izvinite, dostava je, odmah idem.","Kusura bakmayın, teslimat var, hemen gidiyorum.",1],
+    ["Koliko košta?","Kaç para?",0],
+    ["Prijatno!","Afiyet olsun!",0]]},
+  {say:"U redu, ali brzo.", tr:"Tamam, ama çabuk.", opts:[
+    ["Hvala, prijatno.","Teşekkürler, iyi akşamlar.",1],
+    ["Na uglu.","Köşede.",0],
+    ["Govorite li engleski?","İngilizce konuşuyor musunuz?",0]]}
+ ]},
+ {id:"gotovina", name:"Nakit ödeme", who:"Müşteri", setting:"Sipariş 1.200 dinar, müşteri nakit ödeyecek.", steps:[
+  {say:"Koliko je?", tr:"Ne kadar?", opts:[
+    ["Hiljadu dvesta dinara.","1.200 dinar.",1],
+    ["Dvesta dinara.","200 dinar.",0],
+    ["Dve hiljade dinara.","2.000 dinar.",0]]},
+  {say:"Izvolite, dve hiljade.", tr:"Buyurun, iki bin.", opts:[
+    ["Hvala. Evo kusur, osamsto dinara.","Teşekkürler. İşte para üstü, 800 dinar.",1],
+    ["Evo kusur, dvesta dinara.","İşte para üstü, 200 dinar.",0],
+    ["Nemam sitno.","Bozuğum yok.",0]]},
+  {say:"Zadržite sto dinara.", tr:"Yüz dinarı siz alın.", opts:[
+    ["Hvala puno, prijatno!","Çok teşekkürler, afiyet olsun!",1],
+    ["Pogrešna adresa.","Yanlış adres.",0],
+    ["Koji sprat?","Hangi kat?",0]]}
+ ]}
+];
+
+const SIGNS = [
+ ["Ulaz","Giriş"],["Izlaz","Çıkış"],["Guraj","İtiniz"],["Vuci","Çekiniz"],
+ ["Otvoreno","Açık"],["Zatvoreno","Kapalı"],["Apoteka","Eczane"],["Pošta","Postane"],
+ ["Ulica","Sokak"],["Bulevar","Bulvar"],["Trg","Meydan"],["Prodavnica","Market"],
+ ["Pekara","Fırın"],["Parking","Otopark"],["Zabranjeno parkiranje","Park yasak"],
+ ["Jednosmerna ulica","Tek yön"],["Bolnica","Hastane"],["Hitna pomoć","Acil yardım"],
+ ["Policija","Polis"],["Menjačnica","Döviz bürosu"],["Prizemlje","Zemin kat"],
+ ["Dvorište","Avlu"],["Kafana","Meyhane, lokanta"],["Pijaca","Pazar"],
+ ["Novi Beograd","Yeni Belgrad (semt)"],["Zemun","Zemun (semt)"],["Vračar","Vračar (semt)"],
+ ["Zvezdara","Zvezdara (semt)"],["Dorćol","Dorćol (semt)"],["Karaburma","Karaburma (semt)"],
+ ["Čukarica","Čukarica (semt)"],["Voždovac","Voždovac (semt)"]
+];
+
+/* ---------- Script & pronunciation ---------- */
+const CYR = {a:"а",b:"б",c:"ц","č":"ч","ć":"ћ",d:"д","dž":"џ","đ":"ђ",e:"е",f:"ф",g:"г",h:"х",i:"и",j:"ј",k:"к",l:"л",lj:"љ",m:"м",n:"н",nj:"њ",o:"о",p:"п",r:"р",s:"с","š":"ш",t:"т",u:"у",v:"в",z:"з","ž":"ж"};
+function toCyr(s){
+  return s.replace(/d[žŽ]|D[žŽ]|[lL][jJ]|[nN][jJ]|[A-Za-zČĆĐŠŽčćđšž]/g, function(m){
+    const c = CYR[m.toLowerCase()];
+    if(!c) return m;
+    const first = m[0];
+    return (first !== first.toLowerCase()) ? c.toUpperCase() : c;
+  });
+}
+function toTr(s){
+  let t = s.toLowerCase();
+  t = t.replace(/c/g,"ts").replace(/j/g,"y").replace(/dž/g,"c").replace(/đ/g,"c")
+       .replace(/[čć]/g,"ç").replace(/š/g,"ş").replace(/ž/g,"j");
+  return t;
+}
+
+/* ---------- Numbers ---------- */
+const U=["nula","jedan","dva","tri","četiri","pet","šest","sedam","osam","devet","deset","jedanaest","dvanaest","trinaest","četrnaest","petnaest","šesnaest","sedamnaest","osamnaest","devetnaest"];
+const T=["","","dvadeset","trideset","četrdeset","pedeset","šezdeset","sedamdeset","osamdeset","devedeset"];
+const H=["","sto","dvesta","trista","četiristo","petsto","šeststo","sedamsto","osamsto","devetsto"];
+function under1000(n){
+  const p=[], h=Math.floor(n/100), r=n%100;
+  if(h) p.push(H[h]);
+  if(r){ if(r<20) p.push(U[r]); else { p.push(T[Math.floor(r/10)]); if(r%10) p.push(U[r%10]); } }
+  return p.join(" ");
+}
+function numToSr(n){
+  if(n===0) return "nula";
+  const th=Math.floor(n/1000), r=n%1000, p=[];
+  if(th){
+    if(th===1) p.push("hiljadu");
+    else {
+      const w=under1000(th).replace(/jedan$/,"jedna").replace(/dva$/,"dve");
+      const last=th%10, two=th%100;
+      const form=(two>=11&&two<=14)?"hiljada":(last>=2&&last<=4)?"hiljade":"hiljada";
+      p.push(w+" "+form);
+    }
+  }
+  if(r) p.push(under1000(r));
+  return p.join(" ");
+}
+window.__kurir = {toCyr:toCyr,toTr:toTr,numToSr:numToSr};
+
+/* ---------- Storage ---------- */
+const KEY="kurirski.v1";
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||"{}")||{}; }catch(e){ return {}; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+const store = load();
+store.prog = store.prog || {};
+const state = {
+  script: store.script==="cyr"?"cyr":"lat",
+  rate: store.rate===1?1:0.8,
+  group: store.group || "teslim",
+  deck: store.deck || "all",
+  dir: store.dir==="sr"?"sr":"tr",
+  dlg: store.dlg || "restoran",
+  numKind: store.numKind || "kapi",
+  numMode: store.numMode==="read"?"read":"listen"
+};
+function persist(){ Object.assign(store,{script:state.script,rate:state.rate,group:state.group,deck:state.deck,dir:state.dir,dlg:state.dlg,numKind:state.numKind,numMode:state.numMode}); save(); }
+
+const ALL=[]; GROUPS.forEach(function(g){ g.items.forEach(function(it,i){ ALL.push({id:g.id+"-"+i,g:g.id,sr:it[0],tr:it[1],note:it[2]||""}); }); });
+
+/* ---------- DOM helpers ---------- */
+const $ = function(s){ return document.querySelector(s); };
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+const SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+function main(s){ return state.script==="cyr"?toCyr(s):s; }
+function other(s){ return state.script==="cyr"?s:toCyr(s); }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function sayBtn(text, cls){ const b=el("button",cls||"say"); b.type="button"; b.innerHTML=SPK; b.setAttribute("aria-label","Dinle: "+text); b.addEventListener("click",function(e){ e.stopPropagation(); speak(text); }); return b; }
+
+/* ---------- Speech ---------- */
+let voice=null, voiceLang=null, voicesChecked=false;
+function pickVoice(){
+  if(!("speechSynthesis" in window)) return;
+  const vs=speechSynthesis.getVoices()||[];
+  const find=function(p){ return vs.find(function(v){ return v.lang && v.lang.toLowerCase().replace("_","-").indexOf(p)===0; }); };
+  voice=find("sr")||find("hr")||find("bs")||null;
+  voiceLang=voice?voice.lang.slice(0,2).toLowerCase():null;
+}
+function checkVoices(){
+  voicesChecked=true; pickVoice();
+  let dismissed=false; try{ dismissed=localStorage.getItem(KEY+".vn")==="1"; }catch(e){}
+  $("#voice-note").hidden = !!voice || dismissed;
+}
+if("speechSynthesis" in window){
+  pickVoice();
+  speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", function(){ pickVoice(); if(voice) $("#voice-note").hidden=true; });
+  setTimeout(checkVoices, 1500);
+} else { setTimeout(function(){ $("#voice-note").hidden=false; }, 300); }
+function speak(text){
+  if(!("speechSynthesis" in window)) return;
+  const clean=text.replace(/…/g," ").trim();
+  const u=new SpeechSynthesisUtterance(voiceLang==="sr"||!voice ? toCyr(clean) : clean);
+  u.lang = voice ? voice.lang : "sr-RS";
+  if(voice) u.voice=voice;
+  u.rate = state.rate;
+  try{ speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){}
+}
+$("#voice-x").addEventListener("click",function(){ $("#voice-note").hidden=true; try{ localStorage.setItem(KEY+".vn","1"); }catch(e){} });
+
+/* ---------- Header controls ---------- */
+function syncHeader(){
+  $("#sc-lat").setAttribute("aria-pressed", state.script==="lat");
+  $("#sc-cyr").setAttribute("aria-pressed", state.script==="cyr");
+  $("#speed").textContent = state.rate<1 ? "Yavaş" : "Normal";
+}
+$("#sc-lat").addEventListener("click",function(){ state.script="lat"; persist(); rerender(); });
+$("#sc-cyr").addEventListener("click",function(){ state.script="cyr"; persist(); rerender(); });
+$("#speed").addEventListener("click",function(){ state.rate = state.rate<1?1:0.8; persist(); syncHeader(); });
+
+/* ---------- Phrases ---------- */
+function renderPhrases(){
+  const chips=$("#group-chips"); chips.innerHTML="";
+  GROUPS.forEach(function(g){
+    const b=el("button","chip"); b.type="button"; b.textContent=g.name;
+    const n=el("span","n",String(g.items.length)); b.appendChild(n);
+    b.setAttribute("aria-pressed", g.id===state.group);
+    b.addEventListener("click",function(){ state.group=g.id; $("#q").value=""; persist(); renderPhrases(); });
+    chips.appendChild(b);
+  });
+  const q=$("#q").value.trim().toLocaleLowerCase("tr");
+  let items, g=GROUPS.find(function(x){return x.id===state.group;})||GROUPS[0];
+  if(q){
+    items=ALL.filter(function(p){ return (p.sr+" "+p.tr+" "+p.note+" "+toCyr(p.sr)).toLocaleLowerCase("tr").indexOf(q)>-1; });
+    $("#g-title").textContent="Arama sonuçları";
+    $("#g-desc").textContent=items.length+" cümle bulundu.";
+  } else {
+    items=ALL.filter(function(p){return p.g===g.id;});
+    $("#g-title").textContent=g.title;
+    $("#g-desc").textContent=g.desc+" Satıra dokun, sesli dinle.";
+  }
+  const list=$("#list"); list.innerHTML="";
+  if(!items.length){ list.appendChild(el("li","empty","Bu kelimeyle eşleşen cümle yok.")); return; }
+  items.forEach(function(p){
+    const li=el("li","row");
+    li.appendChild(sayBtn(p.sr));
+    const t=el("div","txt");
+    t.appendChild(el("div","sr",main(p.sr)));
+    t.appendChild(el("div","sub",other(p.sr)));
+    t.appendChild(el("div","pr","okunuş: "+toTr(p.sr)));
+    t.appendChild(el("div","tr",p.tr));
+    if(p.note) t.appendChild(el("div","note",p.note));
+    li.appendChild(t);
+    li.addEventListener("click",function(){ speak(p.sr); });
+    list.appendChild(li);
+  });
+}
+$("#q").addEventListener("input", renderPhrases);
+
+/* ---------- Dialogs ---------- */
+let dStep=0, dLog=[];
+function startDialog(id){ state.dlg=id; persist(); dStep=0; dLog=[]; renderDialog(true); }
+function bubble(side, who, sr, tr){
+  const b=el("div","bub "+side);
+  b.appendChild(el("div","who",who));
+  const line=el("div","line");
+  const tx=el("div","txt"); tx.appendChild(el("div","sr",main(sr))); tx.appendChild(el("div","tr2",tr));
+  if(side==="them"){ line.appendChild(sayBtn(sr,"mini")); }
+  line.appendChild(tx); b.appendChild(line);
+  return b;
+}
+function renderDialog(speakNew){
+  const chips=$("#dlg-chips"); chips.innerHTML="";
+  DIALOGS.forEach(function(d){
+    const b=el("button","chip",d.name); b.type="button";
+    b.setAttribute("aria-pressed", d.id===state.dlg);
+    b.addEventListener("click",function(){ startDialog(d.id); });
+    chips.appendChild(b);
+  });
+  const d=DIALOGS.find(function(x){return x.id===state.dlg;})||DIALOGS[0];
+  $("#dlg-setting").textContent=d.setting;
+  const chat=$("#chat"); chat.innerHTML="";
+  dLog.forEach(function(m){ chat.appendChild(bubble(m.side, m.side==="me"?"Sen":d.who, m.sr, m.tr)); });
+  const opts=$("#dlg-opts"); opts.innerHTML="";
+  if(dStep>=d.steps.length){
+    opts.appendChild(el("div","done","Diyalog tamamlandı. Bir de sesli, kendin söyleyerek tekrar et."));
+    const row=el("div","btns");
+    const again=el("button","btn","Baştan başla"); again.type="button"; again.addEventListener("click",function(){ startDialog(d.id); });
+    const idx=DIALOGS.indexOf(d), nx=DIALOGS[(idx+1)%DIALOGS.length];
+    const next=el("button","btn primary","Sıradaki: "+nx.name); next.type="button"; next.addEventListener("click",function(){ startDialog(nx.id); });
+    row.appendChild(again); row.appendChild(next); opts.appendChild(row);
+    return;
+  }
+  const s=d.steps[dStep];
+  chat.appendChild(bubble("them", d.who, s.say, s.tr));
+  if(speakNew) speak(s.say);
+  shuffle(s.opts).forEach(function(o){
+    const b=el("button","opt"); b.type="button";
+    b.appendChild(el("div","sr",main(o[0])));
+    b.appendChild(el("div","tr2","Bu “"+o[1]+"” demek. Başka bir cevap dene."));
+    b.addEventListener("click",function(){
+      if(o[2]){
+        dLog.push({side:"them",sr:s.say,tr:s.tr});
+        dLog.push({side:"me",sr:o[0],tr:o[1]});
+        dStep++; renderDialog(true);
+        const last=$("#chat").lastElementChild; if(last && last.scrollIntoView) last.scrollIntoView({block:"nearest"});
+      } else {
+        b.classList.add("wrong"); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+      }
+    });
+    opts.appendChild(b);
+  });
+}
+
+/* ---------- Flashcards (Leitner) ---------- */
+const DAY=86400000, IV=[0,1,2,4,8,16,32];
+let queue=[], current=null, revealed=false, requeued={};
+function deckCards(){ return state.deck==="all"?ALL:ALL.filter(function(p){return p.g===state.deck;}); }
+function counts(){
+  const now=Date.now(), cards=deckCards();
+  let due=0,nw=0,ok=0;
+  cards.forEach(function(p){ const r=store.prog[p.id]; if(!r) nw++; else { if(r.due<=now) due++; if(r.b>=3) ok++; } });
+  return {due:due,nw:nw,ok:ok};
+}
+function buildQueue(){
+  const now=Date.now(), cards=deckCards();
+  const due=shuffle(cards.filter(function(p){ const r=store.prog[p.id]; return r && r.due<=now; }));
+  const fresh=cards.filter(function(p){ return !store.prog[p.id]; }).slice(0,8);
+  queue=due.concat(fresh); requeued={};
+}
+function renderCards(rebuild){
+  const c=counts();
+  $("#st-due").textContent=c.due; $("#st-new").textContent=c.nw; $("#st-ok").textContent=c.ok;
+  $("#dir-tr").setAttribute("aria-pressed", state.dir==="tr");
+  $("#dir-sr").setAttribute("aria-pressed", state.dir==="sr");
+  const chips=$("#card-chips"); chips.innerHTML="";
+  [{id:"all",name:"Tümü"}].concat(GROUPS).forEach(function(g){
+    const b=el("button","chip",g.name); b.type="button";
+    b.setAttribute("aria-pressed", g.id===state.deck);
+    b.addEventListener("click",function(){ state.deck=g.id; persist(); renderCards(true); });
+    chips.appendChild(b);
+  });
+  if(rebuild || (!current && !queue.length)){ buildQueue(); current=queue.shift()||null; revealed=false; }
+  const area=$("#card-area"); area.innerHTML="";
+  if(!current){
+    const p=el("div","panel");
+    p.appendChild(el("div","prompt-tr","Bu deste için bugünlük bu kadar."));
+    p.appendChild(el("div","hint","Yarın tekrar gelen kartlar burada olacak. İstersen başka bir senaryo seç."));
+    area.appendChild(p); return;
+  }
+  const wrap=el("div","stack");
+  const cur=current;
+  const plate=function(){ const pl=el("div","plate"); const pi=el("div","plate-in");
+    pi.appendChild(el("div","p-main",main(cur.sr))); pi.appendChild(el("div","p-sub",other(cur.sr))); pl.appendChild(pi); return pl; };
+  if(state.dir==="tr"){
+    const p=el("div","panel"); p.appendChild(el("div","prompt-tr",cur.tr));
+    p.appendChild(el("div","hint", revealed?"Doğru söyledin mi?":"Önce Sırpçasını yüksek sesle söyle, sonra kontrol et."));
+    wrap.appendChild(p);
+    if(revealed){ wrap.appendChild(plate()); }
+  } else {
+    wrap.appendChild(plate());
+    if(revealed){ const p=el("div","panel reveal"); p.appendChild(el("div","tr",cur.tr)); wrap.appendChild(p); }
+    else wrap.appendChild(el("div","hint","Anlamını tahmin et, sonra kontrol et."));
+  }
+  if(revealed){
+    const info=el("div","panel");
+    const top=el("div","line"); top.style.display="flex"; top.style.gap="10px"; top.style.alignItems="center";
+    top.appendChild(sayBtn(cur.sr)); top.appendChild(el("div","pr","okunuş: "+toTr(cur.sr)));
+    info.appendChild(top); if(cur.note) info.appendChild(el("div","note",cur.note));
+    wrap.appendChild(info);
+    const row=el("div","btns");
+    const a=el("button","btn again","Tekrar sor"); a.type="button";
+    const g=el("button","btn good","Biliyorum"); g.type="button";
+    a.addEventListener("click",function(){ grade(false); });
+    g.addEventListener("click",function(){ grade(true); });
+    row.appendChild(a); row.appendChild(g); wrap.appendChild(row);
+  } else {
+    const r=el("button","btn primary","Kontrol et"); r.type="button"; r.style.width="100%";
+    r.addEventListener("click",function(){ revealed=true; if(state.dir==="tr") speak(cur.sr); renderCards(false); });
+    wrap.appendChild(r);
+  }
+  area.appendChild(wrap);
+}
+function grade(know){
+  const r=store.prog[current.id]||{b:0,due:0};
+  if(know){ r.b=Math.min(r.b+1,6); r.due=Date.now()+IV[r.b]*DAY; }
+  else { r.b=1; r.due=Date.now(); if(!requeued[current.id]){ requeued[current.id]=1; queue.push(current); } }
+  store.prog[current.id]=r; save();
+  current=queue.shift()||null; revealed=false; renderCards(false);
+}
+$("#dir-tr").addEventListener("click",function(){ state.dir="tr"; revealed=false; persist(); renderCards(false); });
+$("#dir-sr").addEventListener("click",function(){ state.dir="sr"; revealed=false; persist(); renderCards(false); });
+
+/* ---------- Cyrillic quiz ---------- */
+let cq=null, cScore={ok:0,all:0};
+function newCyr(){
+  const ans=SIGNS[Math.floor(Math.random()*SIGNS.length)];
+  const wrong=shuffle(SIGNS.filter(function(s){return s!==ans;})).slice(0,3);
+  cq={ans:ans, opts:shuffle([ans].concat(wrong)), picked:null};
+}
+function renderCyr(){
+  if(!cq) newCyr();
+  $("#cyr-score").textContent="Doğru: "+cScore.ok+" / "+cScore.all;
+  const area=$("#cyr-area"); area.innerHTML="";
+  const pl=el("div","plate p-sign"); const pi=el("div","plate-in");
+  pi.appendChild(el("div","p-main",toCyr(cq.ans[0]).toUpperCase()));
+  if(cq.picked) pi.appendChild(el("div","p-sub",cq.ans[0].toUpperCase()));
+  pl.appendChild(pi); area.appendChild(pl);
+  const grid=el("div","qopts");
+  cq.opts.forEach(function(o){
+    const b=el("button","qopt",o[0]); b.type="button";
+    if(cq.picked){ if(o===cq.ans) b.classList.add("right"); else if(o===cq.picked) b.classList.add("wrong"); b.disabled=true; }
+    b.addEventListener("click",function(){
+      if(cq.picked) return; cq.picked=o; cScore.all++; if(o===cq.ans) cScore.ok++;
+      speak(cq.ans[0]); renderCyr();
+    });
+    grid.appendChild(b);
+  });
+  area.appendChild(grid);
+  if(cq.picked){
+    const ok=cq.picked===cq.ans;
+    const f=el("div","feedback "+(ok?"ok":"no"));
+    f.appendChild(el("div",null, ok?"Doğru.":"Doğrusu bu:"));
+    f.appendChild(el("div","sr",cq.ans[0]+" = "+cq.ans[1]));
+    f.appendChild(el("div","pr","okunuş: "+toTr(cq.ans[0])));
+    area.appendChild(f);
+    const n=el("button","btn primary","Sonraki tabela"); n.type="button"; n.style.width="100%"; n.style.marginTop="12px";
+    n.addEventListener("click",function(){ newCyr(); renderCyr(); });
+    area.appendChild(n);
+  }
+}
+
+/* ---------- Numbers ---------- */
+const KINDS={
+  kapi:{name:"Kapı no",min:1,max:180,step:1,pre:"Broj"},
+  kat:{name:"Kat",min:1,max:14,step:1,pre:"Sprat"},
+  fiyat:{name:"Fiyat",min:15,max:480,step:10,pre:null,suf:"dinara"},
+  dakika:{name:"Dakika",min:1,max:30,step:1,pre:"Stižem za",suf:"minuta"}
+};
+let nq=null;
+function newNum(){
+  const k=KINDS[state.numKind];
+  const n=(Math.floor(Math.random()*(k.max-k.min+1))+k.min)*k.step;
+  nq={n:n, done:false, ok:false};
+}
+function numPhrase(){ const k=KINDS[state.numKind]; const w=numToSr(nq.n); return [k.pre,w,k.suf].filter(Boolean).join(" "); }
+function renderNum(){
+  const kc=$("#num-kinds"); kc.innerHTML="";
+  Object.keys(KINDS).forEach(function(id){
+    const b=el("button","chip",KINDS[id].name); b.type="button";
+    b.setAttribute("aria-pressed", id===state.numKind);
+    b.addEventListener("click",function(){ state.numKind=id; persist(); newNum(); renderNum(); });
+    kc.appendChild(b);
+  });
+  $("#nm-listen").setAttribute("aria-pressed", state.numMode==="listen");
+  $("#nm-read").setAttribute("aria-pressed", state.numMode==="read");
+  if(!nq) newNum();
+  const area=$("#num-area"); area.innerHTML="";
+  const phrase=numPhrase();
+  if(state.numMode==="listen"){
+    const b=el("button","big-say"); b.type="button"; b.innerHTML=SPK+"<span>Dinle</span>";
+    b.addEventListener("click",function(){ speak(phrase); });
+    area.appendChild(b);
+  } else {
+    const pl=el("div","plate"); const pi=el("div","plate-in"); pi.appendChild(el("div","p-main",main(phrase))); pl.appendChild(pi); area.appendChild(pl);
+  }
+  const inp=el("input","numin"); inp.id="num-in"; inp.type="text"; inp.setAttribute("inputmode","numeric"); inp.setAttribute("aria-label","Rakamla yaz"); inp.placeholder="rakamla yaz"; inp.autocomplete="off";
+  if(nq.done){ inp.value=nq.given; inp.disabled=true; }
+  area.appendChild(inp);
+  if(!nq.done){
+    const c=el("button","btn primary","Kontrol et"); c.type="button"; c.style.width="100%"; c.style.marginTop="10px";
+    const go=function(){ const v=parseInt(inp.value.replace(/\D/g,""),10); if(isNaN(v)) { inp.focus(); return; } nq.given=String(v); nq.done=true; nq.ok=(v===nq.n); renderNum(); };
+    c.addEventListener("click",go);
+    inp.addEventListener("keydown",function(e){ if(e.key==="Enter") go(); });
+    area.appendChild(c);
+  } else {
+    const f=el("div","feedback "+(nq.ok?"ok":"no"));
+    f.appendChild(el("div",null, nq.ok?"Doğru: "+nq.n:"Doğrusu: "+nq.n));
+    f.appendChild(el("div","sr",main(phrase)));
+    f.appendChild(el("div","pr","okunuş: "+toTr(phrase)));
+    area.appendChild(f);
+    const row=el("div","btns");
+    const l=el("button","btn","Tekrar dinle"); l.type="button"; l.addEventListener("click",function(){ speak(phrase); });
+    const n=el("button","btn primary","Sonraki"); n.type="button"; n.addEventListener("click",function(){ newNum(); renderNum(); if(state.numMode==="listen") speak(numPhrase()); });
+    row.appendChild(l); row.appendChild(n); area.appendChild(row);
+  }
+}
+$("#nm-listen").addEventListener("click",function(){ state.numMode="listen"; persist(); renderNum(); });
+$("#nm-read").addEventListener("click",function(){ state.numMode="read"; persist(); renderNum(); });
+
+/* ---------- Routing ---------- */
+const VIEWS=["fraze","dijalog","kartice","cirilica","brojevi"];
+let view="fraze";
+function show(v){
+  view = VIEWS.indexOf(v)>-1 ? v : "fraze";
+  document.querySelectorAll("[data-view]").forEach(function(s){ s.hidden = s.id!=="v-"+view; });
+  document.querySelectorAll("nav.tabs a").forEach(function(a){ if(a.dataset.tab===view) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  rerender();
+  window.scrollTo(0,0);
+}
+function rerender(){
+  syncHeader();
+  if(view==="fraze") renderPhrases();
+  else if(view==="dijalog") renderDialog(false);
+  else if(view==="kartice") renderCards(false);
+  else if(view==="cirilica") renderCyr();
+  else if(view==="brojevi") renderNum();
+}
+window.addEventListener("hashchange",function(){ show(location.hash.slice(1)); });
+show(location.hash.slice(1));
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+}
+</script>
+</body>
+</html>
